@@ -136,6 +136,7 @@ class Douyin {
   Future<void> shareImage({
     required List<Uri> imageUris,
     String? state,
+    String? hashtag,
   }) {
     assert(imageUris.length <= 12 /*Android 抖音12.3.0时为35*/);
     assert(imageUris.every((Uri element) => element.isScheme('file')));
@@ -145,6 +146,7 @@ class Douyin {
         'image_uris':
             imageUris.map((Uri element) => element.toString()).toList(),
         if (state != null) 'state': state,
+        if (hashtag != null) 'hashtag': hashtag,
       },
     );
   }
@@ -153,6 +155,7 @@ class Douyin {
   Future<void> shareVideo({
     required List<Uri> videoUris,
     String? state,
+    String? hashtag,
   }) {
     assert(videoUris.length <= 12);
     assert(videoUris.every((Uri element) => element.isScheme('file')));
@@ -162,62 +165,10 @@ class Douyin {
         'video_uris':
             videoUris.map((Uri element) => element.toString()).toList(),
         if (state != null) 'state': state,
+        if (hashtag != null) 'hashtag': hashtag,
       },
     );
   }
-
-  // /// TODO: 没有相关限制信息
-  // Future<void> shareMicroApp({
-  //   String id,
-  //   String title,
-  //   String url,
-  //   String description,
-  //   String state,
-  // }) {
-  //   assert(id?.isNotEmpty ?? false);
-  //   return _channel.invokeMethod<void>(
-  //     'shareMicroApp',
-  //     <String, dynamic>{
-  //       'id': id,
-  //       'title': title,
-  //       'url': url,
-  //       'description': description,
-  //       if (state != null) 'state': state,
-  //     },
-  //   );
-  // }
-
-  ///
-  Future<void> shareHashTags({
-    required List<String> hashTags,
-    String? state,
-  }) {
-    return _channel.invokeMethod<void>(
-      'shareHashTags',
-      <String, dynamic>{
-        'hash_tags': hashTags,
-        if (state != null) 'state': state,
-      },
-    );
-  }
-
-  // /// TODO: 文档都木有
-  // Future<void> shareAnchor({
-  //   String title,
-  //   int businessType,
-  //   String content,
-  //   String state,
-  // }) {
-  //   return _channel.invokeMethod<void>(
-  //     'shareAnchor',
-  //     <String, dynamic>{
-  //       'title': title,
-  //       'business_type': businessType,
-  //       'content': content,
-  //       if (state != null) 'state': state,
-  //     },
-  //   );
-  // }
 
   ///
   Future<bool?> isSupportShareToContacts() {
