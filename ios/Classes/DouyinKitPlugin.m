@@ -38,15 +38,15 @@
     } else if ([@"auth" isEqualToString:call.method]) {
         [self handleAuthCall:call result:result];
     } else if ([@"isSupportShare" isEqualToString:call.method]) {
-        
+
     } else if ([@[@"shareImage", @"shareVideo", @"shareMicroApp", @"shareHashTags", @"shareAnchor"] containsObject:call.method]) {
         [self handleShareCall:call result:result]; // call.argument("video_uris")  call.arguments
     } else if ([@"isSupportShareToContacts" isEqualToString:call.method]) {
-        
+
     } else if ([@[@"shareImageToContacts", @"shareHtmlToContacts"] containsObject:call.method]) {
         [self handleShareToContactsCall:call result:result];
     } else if ([@"isSupportOpenRecord" isEqualToString:call.method]) {
-        
+
     } else if ([@"openRecord" isEqualToString:call.method]) {
         [self handleOpenRecordCall:call result:result];
     } else {
@@ -62,32 +62,63 @@
     NSDictionary *arg = call.arguments;
     NSLog(@"test arg=%@", arg);
     if ([arg isKindOfClass:NSDictionary.class]) {
-        NSArray *uris = arg[@"video_uris"];
+
+        NSArray *uris;
+        DouyinOpenSDKShareMediaType type;
+        NSString *hashtag;
+        if([arg[@"hashtag"] isKindOfClass:NSString.class]) {
+            hashtag = arg[@"hashtag"];
+        }
+        
+        if ([@"shareImage" isEqualToString:call.method]) {
+            uris = arg[@"image_uris"];
+            type = DouyinOpenSDKShareMediaTypeImage;
+        } else {
+            uris = arg[@"video_uris"];
+            type = DouyinOpenSDKShareMediaTypeVideo;
+        }
+
         NSLog(@"test uris=%@", uris);
         if ([uris isKindOfClass:NSArray.class]) {
+            NSLog(@"test 1");
             __block NSMutableArray *assetLocalIds = [NSMutableArray array];
             [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-                
+                NSLog(@"test 2");
                 NSURL *url = [NSURL URLWithString:uris.firstObject]; // file://
-                PHAssetChangeRequest *request = [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:url];
-               NSString *localId = request.placeholderForCreatedAsset.localIdentifier;
-               [assetLocalIds addObject:localId];
+                PHAssetChangeRequest *request;
                 
+                if ([@"shareImage" isEqualToString:call.method]) {
+                    request = [PHAssetChangeRequest creationRequestForAssetFromImageAtFileURL:url];
+                } else {
+                    request = [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:url];
+                }
+                
+                NSString *localId = request.placeholderForCreatedAsset.localIdentifier;
+                [assetLocalIds addObject:localId];
+                
+                NSLog(@"localId = %@", localId);
+
             } completionHandler:^(BOOL success, NSError * _Nullable error) {
+                NSLog(@"test 3");
+                NSLog(@"success %@", success?@"YES":@"NO");
+                NSLog(@"error = %@", error);
                 if (success) {
                    dispatch_async(dispatch_get_main_queue(), ^{
-                       
+
                        DouyinOpenSDKShareRequest *req = [[DouyinOpenSDKShareRequest alloc] init];
-                       req.mediaType = DouyinOpenSDKShareMediaTypeVideo;   // 需要传入分享类型
+                       req.mediaType = type;   // 需要传入分享类型
                        req.landedPageType = DouyinOpenSDKLandedPageEdit;    // 设置分享的目标页面
                        req.localIdentifiers = assetLocalIds;
+                        
+                       req.hashtag = hashtag;
+                       
                        [req sendShareRequestWithCompleteBlock:^(DouyinOpenSDKShareResponse * _Nonnull respond) {
+                           NSLog(@"respond errCode = %@, shareState = %@, error = %@", @(respond.errCode), @(respond.shareState), respond.errString);
+                           
                            if (respond.isSucceed) {
-
-                           // Share Succeed
-
+                               NSLog(@"respond = 分享成功");
                            } else{
-
+                               NSLog(@"respond = 分享失败");
                                NSLog(@"respond = %@", respond.errString);
 
                            }

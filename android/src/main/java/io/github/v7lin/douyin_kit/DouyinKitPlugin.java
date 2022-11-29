@@ -232,10 +232,12 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
             MediaContent mediaContent = new MediaContent();
             mediaContent.mMediaObject = parseImage(call);
             request.mMediaContent = mediaContent;
+            request.mHashTagList = call.argument("hashtag");
         } else if ("shareVideo".equals(call.method)) {
             MediaContent mediaContent = new MediaContent();
             mediaContent.mMediaObject = parseVideo(call);
             request.mMediaContent = mediaContent;
+            request.mHashTagList = call.argument("hashtag");
         } else if ("shareMicroApp".equals(call.method)) {
             request.mMicroAppInfo = parseMicroApp(call);
         } else if ("shareHashTags".equals(call.method)) {
