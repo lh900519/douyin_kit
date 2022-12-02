@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
@@ -34,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -100,6 +102,10 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
             Map<String, Object> map = new HashMap<>();
             map.put("error_code", resp.errorCode);
             map.put("error_msg", resp.errorMsg);
+
+            Log.i("flutter", "resp code: "+resp.errorCode);
+            Log.i("flutter", "resp msg: "+resp.errorMsg);
+
             if (resp.extras != null) {
                 // TODO
             }
@@ -232,12 +238,12 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
             MediaContent mediaContent = new MediaContent();
             mediaContent.mMediaObject = parseImage(call);
             request.mMediaContent = mediaContent;
-            request.mHashTagList = call.argument("hashtag");
+            request.mHashTagList = parseHashtag(call);
         } else if ("shareVideo".equals(call.method)) {
             MediaContent mediaContent = new MediaContent();
             mediaContent.mMediaObject = parseVideo(call);
             request.mMediaContent = mediaContent;
-            request.mHashTagList = call.argument("hashtag");
+            request.mHashTagList = parseHashtag(call);
         } else if ("shareMicroApp".equals(call.method)) {
             request.mMicroAppInfo = parseMicroApp(call);
         } else if ("shareHashTags".equals(call.method)) {
@@ -252,11 +258,29 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         result.success(null);
     }
 
+    // 处理hashtag
+    private ArrayList<String> parseHashtag(MethodCall call) {
+        ArrayList<String> hashtags = new ArrayList<>();
+
+        String hashStr = call.argument("hashtag");
+        if (hashStr != null) {
+            String[] hashTemp;
+            hashTemp = hashStr.split(" ");
+            for (String hash : hashTemp) {
+                Log.i("flutter", "dy_kit hash ---- "+hash);
+                hashtags.add(hash.replace("#", ""));
+            }
+        }
+
+        return hashtags;
+    }
+
     private ImageObject parseImage(MethodCall call) {
         ImageObject image = new ImageObject();
         ArrayList<String> imagePaths = new ArrayList<>();
         List<String> imageUris = call.argument("image_uris");
         for (String imageUri : imageUris) {
+            Log.i("flutter", "dy_kit image uri----"+imageUri);
             imagePaths.add(getShareFilePath(imageUri));
         }
         image.mImagePaths = imagePaths;
@@ -338,7 +362,6 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
     }
 
     // ---
-
     private String getShareFilePath(String fileUri) {
         DouYinOpenApi openApi = createOpenApi();
         if (openApi != null && openApi.isShareSupportFileProvider()) {
@@ -347,9 +370,11 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
                     ProviderInfo providerInfo = applicationContext.getPackageManager().getProviderInfo(new ComponentName(applicationContext, DouyinFileProvider.class), PackageManager.MATCH_DEFAULT_ONLY);
                     Uri shareFileUri = FileProvider.getUriForFile(applicationContext, providerInfo.authority, new File(Uri.parse(fileUri).getPath()));
                     applicationContext.grantUriPermission("com.ss.android.ugc.aweme", shareFileUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    Log.i("flutter", "aaaurl"+shareFileUri.toString());
                     return shareFileUri.toString();
                 } catch (PackageManager.NameNotFoundException e) {
                     // ignore
+                    Log.i("flutter", Objects.requireNonNull(e.getMessage()));
                 }
             }
         }
