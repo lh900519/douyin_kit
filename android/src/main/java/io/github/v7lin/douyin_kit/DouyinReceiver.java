@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.text.TextUtils;
 
 public abstract class DouyinReceiver extends BroadcastReceiver {
@@ -24,7 +25,11 @@ public abstract class DouyinReceiver extends BroadcastReceiver {
     public static void registerReceiver(Context context, DouyinReceiver receiver) {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_DOUYIN_RESP);
-        context.registerReceiver(receiver, intentFilter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, intentFilter, Context.RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(receiver, intentFilter);
+        }
     }
 
     public static void unregisterReceiver(Context context, DouyinReceiver receiver) {
